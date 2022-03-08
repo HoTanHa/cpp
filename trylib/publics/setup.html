@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+    <link rel="stylesheet" href="bootstrap.min.css">
+    <script src="jquery.min.js"></script>
+    <script src="bootstrap.min.js"></script>
+
+    <title>Setup Camera</title>
+    <link rel="shortcut icon" href="favicon_bm.ico" type="image/x-icon">
+    </style>
+
+</head>
+
+<body>
+    <div>
+        <div id="tagSetup" class="container">
+            <h3>LẮP ĐẶT CAMERA</h3>
+            <div class="row">
+                <div class="col-sm-3">
+                    <input type="button" class="btn btn-primary" value="Lắp đặt" id="btnLapDat">
+                </div>
+                <div class="col-sm-3">
+                    <input type="button" class="btn btn-primary" value="Dừng" id="btnStopLapDat">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div style="padding: 10px;">
+                        <h4><span class="label label-danger">CAMERA 1</span></h4>
+                        <img id="idImageShow1" src="" alt="" width="100%" height="auto"
+                            style="max-width: 640px; max-height: 360px; display: block; margin-left: auto; margin-right: auto;">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div style="padding: 10px;">
+                        <h4><span class="label label-danger">CAMERA 2</span></h4>
+                        <img id="idImageShow2" src="" alt="" width="100%" height="auto"
+                            style="max-width: 640px; max-height: 360px; display: block; margin-left: auto; margin-right: auto;">
+                    </div>
+                </div>
+            </div>
+            <div id="setup34" class="row">
+                <div class="col-md-6">
+                    <div style="padding: 10px;">
+                        <h4><span class="label label-danger">CAMERA 3</span></h4>
+                        <img id="idImageShow3" src="" alt="" width="100%" height="auto"
+                            style="max-width: 640px; max-height: 360px; display: block; margin-left: auto; margin-right: auto;">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div style="padding: 10px;">
+                        <h4><span class="label label-danger">CAMERA 4</span></h4>
+                        <img id="idImageShow4" src="" alt="" width="100%" height="auto"
+                            style="max-width: 640px; max-height: 360px; display: block; margin-left: auto; margin-right: auto;">
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h4>01. Trạng thái GSM: <span class="label label-default" id="idGsmStatus"></span></h4>
+                <h4>02. Trạng thái GPS: <span class="label label-default" id="idGpsStatus"></span></h4>
+                <h4>03. Ổ cứng: <span class="label label-default" id="idHawdDrive"></span></h4>
+                <h4>04. Thẻ nhớ: <span class="label label-default" id="idSdCardStatus"></span></h4>
+                <h4>05. Thẻ SIM: <span class="label label-default" id="idSimStatus"></span></h4>
+                <h4>06. Nguồn Vin: <span class="label label-default" id="idVin"></span></h4>
+                <h4>07. Nhiên liệu (Fuel): <span class="label label-default" id="idFuel"></span></h4>
+                <h4>08. Chìa khóa (Key): <span class="label label-default" id="idKey"></span></h4>
+                <h4>09. Cửa (Door): <span class="label label-default" id="idDoor"></span></h4>
+                <h4>10. Máy lạnh: <span class="label label-default" id="idAirCon"></span></h4>
+                <h4>11. Mức sóng GSM: <span class="label label-default" id="idGsmValue"></span></h4>
+                <h4>12. Loại sóng GSM: <span class="label label-default" id="idTypeGsm"></span></h4>
+            </div>
+
+            <script>
+                var count = 0;
+                var numCam = 2;
+                var intervalRequestImage;
+                $("#setup34").hide();
+                $.getJSON("api/getNumberCamera", function (data, status) {
+                    console.log(data);
+                    if (data.numCam == 4) {
+                        $("#setup34").show();
+                        numCam = 4;
+                    }
+
+                });
+                document.getElementById('btnLapDat').onclick = function () {
+                    if (count == 0) {
+                        $.get("api/startSetupCamera", function (data, status) {
+                            console.log(data);
+                            intervalRequestImage = setInterval(() => {
+                                count++;
+                                document.getElementById('idImageShow1').src = "api/getImageStream?camera=0&time=" + count;
+                                document.getElementById('idImageShow2').src = "api/getImageStream?camera=1&time=" + count;
+                                if (numCam == 4) {
+                                    document.getElementById('idImageShow3').src = "api/getImageStream?camera=2&time=" + count;
+                                    document.getElementById('idImageShow4').src = "api/getImageStream?camera=3&time=" + count;
+                                }
+                            }, 2000);
+                        });
+                    }
+                };
+
+                document.getElementById('btnStopLapDat').onclick = function () {
+                    if (count != 0) {
+                        count = 0;
+                        clearInterval(intervalRequestImage);
+                    }
+                };
+                setInterval(() => {
+                    let query = "api/getInfoSetup";
+                    console.log(query);
+                    $.getJSON(query, function (data, status) {
+                        $("#idGsmStatus").html("Không có GSM.");
+                        $("#idGpsStatus").html("Không có GPS.");
+                        $("#idHawdDrive").html("Không có ổ cứng.");
+                        $("#idSdCardStatus").html("Lỗi thẻ nhớ");
+                        $("#idSimStatus").html("Lỗi SIM");
+                        if (data.GSM == "1") {
+                            $("#idGsmStatus").html("GSM OK.");
+                        }
+                        if (data.GPS == "1") {
+                            $("#idGpsStatus").html("GPS OK.");
+                        }
+                        if (data.HardDrive == "1") {
+                            $("#idHawdDrive").html("Có Ổ cứng.");
+                        }
+                        if (data.SdCard == "1") {
+                            $("#idSdCardStatus").html("Thẻ nhớ OK.");
+                        }
+                        if (data.SIM == "1"){
+                            $("#idSimStatus").html("SIM OK.");
+                        }
+                        $("#idVin").html(data.Vin);
+                        $("#idFuel").html(data.Fuel);
+                        $("#idKey").html(data.Key);
+                        $("#idDoor").html(data.Door);
+                        $("#idAirCon").html(data.AirCon);
+                        $("#idGsmValue").html(data.GsmValue);
+                        $("#idTypeGsm").html(data.Type);
+                    });
+                }, 2000);
+
+
+                $("#idGsmStatus").html("Không có GSM.");
+                $("#idGpsStatus").html("Không có GPS.");
+                $("#idHawdDrive").html("Không có ổ cứng.");
+                $("#idSdCardStatus").html("Thẻ nhớ OK.");
+
+            </script>
+        </div>
+    </div>
+</body>
+
+</html>
