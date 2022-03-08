@@ -2,6 +2,7 @@
 *.o
 */*.out
 */*.o
+*/valgrind-out.txt
 
 
 
