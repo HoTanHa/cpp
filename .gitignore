@@ -4,6 +4,7 @@
 */*.o
 */valgrind-out.txt
 
+*.gch
 
 
 

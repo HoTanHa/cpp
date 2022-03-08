@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+    <title>Trích xuất dữ liệu</title>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <script src="https://visjs.github.io/vis-timeline/standalone/umd/vis-timeline-graph2d.min.js"></script>
+    <link href="https://visjs.github.io/vis-timeline/styles/vis-timeline-graph2d.min.css" rel="stylesheet"
+        type="text/css">
+ -->
+
+    <link rel="stylesheet" href="bootstrap.min.css">
+    <script src="jquery.min.js"></script>
+    <script src="bootstrap.min.js"></script>
+
+    <title>Trích xuất dữ liệu</title>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <script src="vis-timeline-graph2d.min.js"></script>
+    <link href="vis-timeline-graph2d.min.css" rel="stylesheet" type="text/css">
+
+    <style>
+        .nav-sticky {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #fff;
+            position: -webkit-sticky;
+            /* Safari */
+            position: sticky;
+            top: 0;
+        }
+
+        .tableFixHead {
+            overflow: auto;
+            height: 100px;
+        }
+
+        .tableFixHead thead th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        th {
+            background: #ededed;
+        }
+
+        .tableFixHead tbody th {
+            position: sticky;
+            left: 0;
+        }
+
+        table .tableFixHead {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        tr,
+        th,
+        td {
+            padding: 0;
+            margin: 0;
+        }
+
+        .tbodyInfo td {
+            width: 50%;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        tr:hover {
+            background-color: #c0d9ee;
+        }
+
+        .navbar-default {
+            color: #000000;
+            background: #acacac;
+            font-weight: bold;
+
+        }
+
+        .navbar-default .navbar-nav>.active {
+            color: #000;
+            background: #149dff;
+            font-weight: bold;
+        }
+
+        .navbar-default .navbar-nav li a:hover {
+            background: #9bd4fc;
+            color: #000000;
+        }
+        .navbar-default .navbar-nav>.active>a,
+        .navbar-default .navbar-nav>.active>a:hover,
+        .navbar-default .navbar-nav>.active>a:focus {
+            color: #000;
+            background: #149dff;
+            font-weight: bold;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="container navbar-fixed-top" style="background-color: #fff; ">
+        <div style="height: 100px;">
+            <header>
+                <h3 style="text-align: center;">TRÍCH XUẤT DỮ LIỆU CỦA XE <strong id="idXe"></strong></h3>
+            </header>
+            <nav class="navbar navbar-default">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                </div>
+                <div class="collapse navbar-collapse" id="myNavbar">
+                    <ul class="nav navbar-nav" id="nav-main">
+                        <li class="active"><a href="#tagInfomation">Thông tin chung</a></li>
+                        <li><a href="#tagImage">Hình ảnh</a></li>
+                        <li><a href="#tagVideo">Video</a></li>
+                        <li><a href="#tagWorkTime">Thời gian làm việc</a></li>
+                        <li><a href="#tagDungDo">Dừng đỗ</a></li>
+                        <li><a href="#tagHanhTrinh">Hành trình</a></li>
+                        <li><a href="#tagSpeed">Tốc độ từng giây</a></li>
+                        <li><a href="#tagOverSpeed">Quá tốc độ</a></li>
+                    </ul>
+                </div>
+            </nav>
+            <script type="text/javascript">
+                $("#nav-main li").click(function (e) {
+                    e.preventDefault();
+                    var clickedItem = $(this);
+                    $("#nav-main li").each(function () {
+                        $(this).removeClass("active");
+                    });
+                    clickedItem.addClass("active");
+
+                    $(".toggle").hide();
+                    var toShow = $(this).find('a').attr('href');
+                    $(toShow).show();
+                    $("#myNavbar").collapse("hide");
+                });
+                // $("#nav-main li").on("click", function (properties) {
+                //     $("#myNavbar").collapse("hide");
+                // })
+            </script>
+        </div>
+    </div>
+    <div style="margin-top: 120px;">
+        <br>
+        <div id="tagInfomation" class="container toggle">
+            <h3>Thông tin</h3>
+            <div>
+                <div>
+                    <button id="btnLoadInfoData">Load Thông tin Thiết bị </button>
+                </div>
+                <div>
+                    <h5>Thông tin cố định</h5>
+                    <table class="table table-bordered table_info">
+                        <tbody class="tbodyInfo">
+                            <tr>
+                                <td>01. Đơn vị cung cấp thiết bị</td>
+                                <td id="idTenCongTy"></td>
+                            </tr>
+                            <tr>
+                                <td>02. Kiểu loại CMRGSHT</td>
+                                <td id="idTenSanPham"></td>
+                            </tr>
+                            <tr>
+                                <td>03. Số seri của CMRGSHT</td>
+                                <td id="idSerial"></td>
+                            </tr>
+                            <tr>
+                                <td>04. Thông tin biển số xe</td>
+                                <td id="idBienSo"></td>
+                            </tr>
+                            <tr>
+                                <td>05. Phương pháp đo tốc độ</td>
+                                <td id="idPpDoTocDo"></td>
+                            </tr>
+                            <tr>
+                                <td>06. Cấu hình xung / km</td>
+                                <td id="idConfigXungKm"></td>
+                            </tr>
+                            <tr>
+                                <td>07. Cấu hình tốc độ giới hạn</td>
+                                <td id="idVanTocMax"></td>
+                            </tr>
+                            <tr>
+                                <td>08. Ngày lắp đặt / sửa đổi thiết bị gần nhất</td>
+                                <td id="idNgayLapDat"></td>
+                            </tr>
+                            <tr>
+                                <td>09. Ngày cập nhật phần mềm thiết bị gần nhất</td>
+                                <td id="idNgayCapNhat"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div>
+                    <h5>Thông tin trạng thái hoạt động của thiết bị</h5>
+                    <table class="table table-bordered table_info">
+                        <tbody class="tbodyInfo">
+                            <tr>
+                                <td>10. Tình trạng sóng thông tin di động</td>
+                                <td id="idGsmStatus"></td>
+                            </tr>
+                            <tr>
+                                <td>11. Tình trạng GPS/GNSS</td>
+                                <td id="idGpsStatus"></td>
+                            </tr>
+                            <tr>
+                                <td>12. Tình trạng bộ nhớ</td>
+                                <td id="idSdCardStatus"></td>
+                            </tr>
+                            <tr>
+                                <td>13. Dung lượng bộ nhớ</td>
+                                <td id="idDungLuong"></td>
+                            </tr>
+                            <tr>
+                                <td>14. Thông tin lái xe hiện tại</td>
+                                <td id="idThongTinTaiXe"></td>
+                            </tr>
+                            <tr>
+                                <td>15. Thời gian lái xe liên tục</td>
+                                <td id="idThoiGianLienTuc"></td>
+                            </tr>
+                            <tr>
+                                <td>16. Thông tin về GPS/GNSS</td>
+                                <td id="idGpsInfo"></td>
+                            </tr>
+                            <tr>
+                                <td>17. Tốc độ</td>
+                                <td id="idVanToc"></td>
+                            </tr>
+                            <tr>
+                                <td>18. Thời gian của thiết bị</td>
+                                <td id="idThoiGianTb"></td>
+                            </tr>
+                            <tr>
+                                <td>19. Cấu hình Thời gian được tính là một lần dừng đỗ</td>
+                                <td id="idCHTGDungDo"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <script>
+                setTimeout(function () {
+                    let query = "api/infoDevice";
+                    console.log(query);
+                    $.getJSON(query, function (data, status) {
+                        console.log(data);
+                        LoadInfoData(data);
+                        $('#idXe').html(data.BienSo);
+                    });
+                }, 1000);
+                document.getElementById("btnLoadInfoData").onclick = function () {
+                    let query = "api/infoDevice";
+                    console.log(query);
+                    $.getJSON(query, function (data, status) {
+                        console.log(data);
+                        LoadInfoData(data);
+                        $('#idXe').html(data.BienSo);
+                    });
+                }
+                function LoadInfoData(params) {
+                    $("#idTenCongTy").html(params.TenCongTy);
+                    $("#idTenSanPham").html(params.TenSanPham);
+                    $("#idSerial").html(params.Serial);
+                    $("#idBienSo").html(params.BienSo);
+                    if (params.ppDoTocDo == '0') {
+                        $("#idPpDoTocDo").html("Đo bằng xung.");
+                    }
+                    else if (params.ppDoTocDo == '1') {
+                        $("#idPpDoTocDo").html("Đo bằng GPS/GNS.");
+                    }
+                    else if (params.ppDoTocDo == '2') {
+                        $("#idPpDoTocDo").html("Phương pháp khác.");
+                    }
+                    $("#idConfigXungKm").html(params.ConfigXungKm);
+                    $("#idVanTocMax").html(params.VanTocMax);
+                    $("#idNgayLapDat").html(params.NgayLapDat);
+                    $("#idNgayCapNhat").html(params.NgayCapNhat);
+
+                    if (params.GsmStatus == '0') {
+                        $("#idGsmStatus").html("không có sóng");
+                    }
+                    else if (params.GsmStatus == '1') {
+                        $("#idGsmStatus").html("có sóng");
+                    }
+                    else if (params.GsmStatus == '2') {
+                        $("#idGsmStatus").html("có sóng, không kết nối được với máy chủ");
+                    }
+                    else if (params.GsmStatus == '3') {
+                        $("#idGsmStatus").html("có sóng, kết nối được với máy chủ");
+                    }
+                    else if (params.GsmStatus == '4') {
+                        $("#idGsmStatus").html("lỗi khác");
+                    }
+
+                    if (params.GpsStatus == '0') {
+                        $("#idGpsStatus").html("không có sóng GPS/GNSS");
+                    }
+                    else if (params.GpsStatus == '1') {
+                        $("#idGpsStatus").html("có sóng GPS/GNSS");
+                    }
+                    else if (params.GpsStatus == '2') {
+                        $("#idGpsStatus").html("lỗi khác");
+                    }
+
+                    if (params.SdcardStatus == '0') {
+                        $("#idSdCardStatus").html("có lỗi");
+                    }
+                    else if (params.SdcardStatus == '1') {
+                        $("#idSdCardStatus").html("bình thường");
+                    }
+                    $("#idDungLuong").html(params.DungLuong);
+                    const myArray = params.ThongTinTaiXe.split(",");
+                    $("#idThongTinTaiXe").html(myArray[0] + ", " + myArray[1]);
+                    $("#idThoiGianLienTuc").html(params.ThoiGianLienTuc);
+                    $("#idGpsInfo").html(params.GpsInfo);
+                    $("#idVanToc").html(params.VanToc);
+                    $("#idThoiGianTb").html(params.ThoiGianTb);
+                    $("#idCHTGDungDo").html(params.ThoiGianNghi);
+                }
+            </script>
+        </div>
+        <div id="tagImage" class="toggle" style="display: none;">
+            <div class="container">
+                <br>
+                <h3>Dữ liệu hình ảnh</h3>
+                <br>
+                <form>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div>
+                                <label for="">Thời gian bắt đầu: </label>
+                            </div>
+                            <div>
+                                <input type="datetime-local" name="timeImageStart" id="idTimeImageStart">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div>
+                                <label for="">Thời gian kết thúc: </label>
+                            </div>
+                            <div>
+                                <input type="datetime-local" name="timeImageEnd" id="idTimeImageEnd">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div><br></div>
+                            <div>
+                                <input type="button" id="searchImage" value="Tìm kiếm">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <br>
+            <div id="divImageTable" style="margin: 10px; display: none;">
+                <div class="row">
+                    <div class="col-md-6" style="height: auto;">
+                        <div style="padding: 10px;">
+                            <img id="idImageShow" src="" alt="" width="100%" height="auto"
+                                style="max-width: 640px; max-height: 360px; display: block; margin-left: auto; margin-right: auto;">
+                        </div>
+                        <div id="btnDownloadImage" style="text-align: center;">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div style="height: 400px; overflow:auto;">
+                            <table class="table table-bordered  tableFixHead" id="idImageTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Thời gian</th>
+                                        <th>Camera</th>
+                                        <th>Tọa độ</th>
+                                        <th>Tải</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="idBodyImageTable" style="overflow-y: auto;">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                   
+                </div>
+            </div>
+            <script>
+                const now = new Date();
+                var date000 = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+                date000.setMinutes(date000.getMinutes() - date000.getTimezoneOffset());
+                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                document.getElementById('idTimeImageStart').defaultValue = date000.toISOString().substring(0, 16);
+                document.getElementById('idTimeImageEnd').defaultValue = now.toISOString().substring(0, 16);
+                var dateGetImageClick = new Date();
+                document.getElementById('searchImage').onclick = function () {
+                    let tS = new Date(idTimeImageStart.value).getTime();
+                    let tE = new Date(idTimeImageEnd.value).getTime();
+                    if ((tS >= (tE - 1000)) || (tE > new Date().getTime())) {
+                        alert("Vui lòng chọn lại thời gian.");
+                        return;
+                    }
+
+                    $("#divImageTable").show();
+                    let query = "api/image?timeStart=" + tS + "&timeEnd=" + tE;
+                    console.log(query);
+                    $.getJSON(query, function (data, status) {
+                        console.log(data);
+                        $('#idImageTable tbody').html("");
+                        var tr;
+                        for (var i = 0; i < data.length; i++) {
+                            tr = $('<tr/>');
+                            tr.append("<td>" + data[i].ID + "</td>");
+                            tr.append("<td>" + data[i].time + "</td>");
+                            tr.append("<td>" + data[i].camChn + "</td>");
+                            tr.append("<td>" + data[i].location + "</td>");
+                            var camID123 = data[i].camChn - 1;
+                            var time123 = new Date(data[i].time.substring(0, 4),
+                                data[i].time.substring(4, 6),
+                                data[i].time.substring(6, 8),
+                                data[i].time.substring(9, 11),
+                                data[i].time.substring(11, 13),
+                                data[i].time.substring(13));
+                            time123.setMonth(time123.getMonth() - 1);
+                            tr.append("<td>" + '<a class="label label-primary" download="image_' + data[i].camChn + '_' + data[i].time
+                                + '.jpg"  href="api/getImage?camera=' + camID123 + "&time=" + time123.getTime() + '" style="font-size:16px;">Tải</a>' + "</td>");
+                            $('#idImageTable tbody').append(tr);
+                        }
+                        $('#idImageTable tr').click(function () {
+                            var tableData = $(this).children("td").map(function () { return $(this).text(); }).get();
+                            // alert("Your data is: " + $.trim(tableData[0]) + " , " + $.trim(tableData[1]) + " , " + $.trim(tableData[2]));
+                            var timeImage = new Date(tableData[1].substring(0, 4),
+                                tableData[1].substring(4, 6),
+                                tableData[1].substring(6, 8),
+                                tableData[1].substring(9, 11),
+                                tableData[1].substring(11, 13),
+                                tableData[1].substring(13));
+                            timeImage.setMonth(timeImage.getMonth() - 1);
+                            if (dateGetImageClick === timeImage) {
+                                return;
+                            }
+                            dateGetImageClick = timeImage;
+                            var camChn = parseInt(tableData[2]) - 1;
+                            var srcImage = "api/getImage?camera=" + camChn + "&time=" + timeImage.getTime();
+                            document.getElementById('idImageShow').src = srcImage;
+                            $('#btnDownloadImage').html('<a  class="btn btn-primary" download="image_' + camChn + '_' + tableData[1]
+                                + '.jpg" href="' + srcImage + '">Tải về</a>');
+                        });
+                    });
+                };
+
+            </script>
+        </div>
+        <div id="tagVideo" class="toggle" style="display: none;">
+            <div class="container">
+                <h3>Dữ liệu video</h3>
+                <br>
+            </div>
+            <div style="margin-left: 10px; margin-right: 10px;">
+                <div id="visualization"></div>
+
+            </div>
+            <div class="container" style="margin-top: 20px;">
+                <div style="margin-top: 10px;">
+                    <input type="submit" id="btnGetVideoInterval" value="Load Dữ liệu Thời gian lưu video">
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div><label>Camera: </label><br>
+                            <div style="padding-left: 20px;">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="radio-inline"><input type="radio" name="cameraVideo"
+                                                id="checkboxCamVideo1">Camera 1</label>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="radio-inline"><input type="radio" name="cameraVideo"
+                                                id="checkboxCamVideo2">Camera 2</label>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label id="lbCheckboxCamVideo3" class="radio-inline"><input type="radio"
+                                                name="cameraVideo" id="checkboxCamVideo3">Camera 3</label>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label id="lbCheckboxCamVideo4" class="radio-inline"><input type="radio"
+                                                name="cameraVideo" id="checkboxCamVideo4">Camera 4</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="">Thời gian: </label><br>
+                                <div style="padding-left: 20px;">
+                                    <label for="">Ngày:</label>
+                                    <input type="date" name="dateVideo" id="idDateGetVideo">
+                                    <label for="">Giờ:</label>
+                                    <select id="idHourVideo" name="hourVideo" style="width: 50px; text-align: right;">
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                        <option value="6">6</option>
+                                        <option value="7">7</option>
+                                        <option value="8">8</option>
+                                        <option value="9">9</option>
+                                        <option value="10">10</option>
+                                        <option value="11">11</option>
+                                        <option value="12">12</option>
+                                        <option value="13">13</option>
+                                        <option value="14">14</option>
+                                        <option value="15">15</option>
+                                        <option value="16">16</option>
+                                        <option value="17">17</option>
+                                        <option value="18">18</option>
+                                        <option value="19">19</option>
+                                        <option value="20">20</option>
+                                        <option value="21">21</option>
+                                        <option value="22">22</option>
+                                        <option value="23">23</option>
+                                    </select>
+                                    <input type="button" id="searchVideo" value="Tìm kiếm">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div style="height: 300px; overflow:auto; margin-top: 20px;">
+                            <table class="table table-bordered  tableFixHead" id="idVideoTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Danh sách</th>
+                                        <th>Xem Video</th>
+                                        <th>Download</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="idBodyVideoTable" style="overflow-y: auto;">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div style="margin-top: 20px;">
+                            <h5> <strong>SAO CHÉP DỮ LIỆU VIDEO QUA USB</strong> </h5>
+                            <div>
+                                <div>
+                                    <label for="">Thời gian bắt đầu: </label>
+                                    <input type="datetime-local" name="timeVideoUsbStart" id="idTimeVideoUsbStart">
+                                </div>
+                                <div>
+                                    <label for="">Số lượng (phút): </label>
+                                    <select id="idNumVideoUsb" name="numVideoUsb"
+                                        style="width: 50px; text-align: right;">
+                                        <option value="5">5</option>
+                                        <option value="10">10</option>
+                                        <option value="20">20</option>
+                                        <option value="30">30</option>
+                                        <option value="40">40</option>
+                                        <option value="50">50</option>
+                                        <option value="60">60</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-default" id="btnDownloadToUsb">Download</button>
+                            </div>
+                            <br>
+                            <div>
+                                <label for="" id="lbAnnounceCopy"></label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <!-- href="/other/" onclick="javascript:event.target.port=8080" -->
+                <a href="/VID_1_20211011_113759.mp4" onclick="javascript:event.target.port=8082" download>sss</a>
+                <!-- <video src="" +window.location.origin + ":8082VID_1_20211011_113759.mp4"></video> -->
+            </div>
+            <script>
+                document.getElementById('idDateGetVideo').defaultValue = new Date().toJSON().slice(0, 10);
+                var startVideo = 0;
+                var endVideo = 0;
+                $.getJSON("api/getNumberCamera", function (data, status) {
+                    console.log(data);
+                    if (data.numCam == 4) {
+                        $("#lbCheckboxCamVideo3").show();
+                        $("#lbCheckboxCamVideo4").show();
+                    }
+                    else {
+                        $("#lbCheckboxCamVideo3").hide();
+                        $("#lbCheckboxCamVideo4").hide();
+                    }
+
+                });
+                $.getJSON("api/getLimitVideo", function (data, status) {
+                    startVideo = data.start * 1000;
+                    endVideo = data.end * 1000;
+                });
+
+                function drawData(datagroup, data) {
+                    var container = document.getElementById('visualization');
+                    var groups = new vis.DataSet(datagroup);
+                    var items = new vis.DataSet(data);
+                    var options = {
+                        locale: 'en',
+                        width: '100%',
+                        zoomable:true,
+                        // editable: true,
+                        preferZoom: false,
+                        margin: {
+                            item: 20, // minimal margin between items
+                            axis: 5   // minimal margin between items and the axis
+                        },
+                        showTooltips: true,
+                        tooltip: {
+                            followMouse: true,
+                            overflowMethod: "cap",
+                            delay: 100,
+                            template: function (item, element, data) {
+                                // console.log(item);
+                                const now = new Date();
+                                const offsetMs = now.getTimezoneOffset() * 60 * 1000;
+                                const str1 = (new Date(item.start.getTime() - offsetMs)).toISOString().slice(0, 19).replace(/-/g, "/").replace("T", " ");
+                                const str2 = (new Date(item.end.getTime() - offsetMs)).toISOString().slice(0, 19).replace(/-/g, "/").replace("T", " ");
+                                var tooltip = '<h5>' + str1 + ' --- ' + str2 + '</h5>';
+                                return tooltip;
+                            }
+                        },
+                        orientation: 'top',
+                        stack: false,
+                        align: "center"
+                    };
+                    var timeline = new vis.Timeline(container, items, groups, options);
+
+                    timeline.on('mouseUp', function (properties) {
+                        properties.event.preventDefault();
+                        if (properties.item == null) {
+                            return;
+                        }
+                        var itemData = timeline.itemsData.get(properties.item);
+                        console.log(itemData);
+                    });
+                }
+                document.getElementById('btnGetVideoInterval').onclick = function () {
+                    $.getJSON("test", function (data, status) {
+                        console.log(data);
+                        $('#visualization').html("");
+                        drawData(data.groups, data.dataInterval);
+                    });
+                }
+                document.getElementById('searchVideo').onclick = function () {
+                    var camChn = "0";
+                    if (document.getElementById('checkboxCamVideo1').checked) {
+                        camChn = "0";
+                    }
+                    else if (document.getElementById('checkboxCamVideo2').checked) {
+                        camChn = "1";
+                    }
+                    else if (document.getElementById('checkboxCamVideo3').checked) {
+                        camChn = "2";
+                    }
+                    else if (document.getElementById('checkboxCamVideo4').checked) {
+                        camChn = "3";
+                    }
+                    else {
+                        alert("Vui lòng chọn camera để lấy dữ liệu!!");
+                        return;
+                    }
+                    var dateGetInterval = new Date(idDateGetVideo.value);
+                    var hourgetVideo = $('#idHourVideo').val();
+                    var timeUnixVideo = dateGetInterval.getTime() / 1000 + hourgetVideo * 3600 + dateGetInterval.getTimezoneOffset() * 60;
+                    let query = "api/getListVideo?camera=" + camChn + "&time=" + timeUnixVideo;
+                    console.log(query);
+                    $.getJSON(query, function (data, status) {
+                        console.log(data);
+                        $('#idVideoTable tbody').html("");
+                        var tr;
+                        var count = 1;
+                        for (var i = 0; i < data.files.length; i++) {
+                            const list = data.files[i];
+                            for (let j = 0; j < list.list_file.length; j++) {
+                                const element = list.list_file[j];
+                                tr = $('<tr/>');
+                                tr.append("<td>" + count + "</td>");
+                                tr.append("<td>" + element + "</td>");
+                                tr.append("<td>" + '<a href="' + list.path + "/" + element + '" target="_blank"><input type="button" value="Xem Video"></a>' + "</td>");
+                                tr.append("<td>" + '<a class="btn btn-primary" download="' + element + '" href="' + list.path + "/" + element + '">Tải</a>' + "</td>");
+                                $('#idVideoTable tbody').append(tr);
+                                count++;
+                            }
+                        }
+                        $('#idVideoTable tr').click(function () {
+                            var tableData = $(this).children("td").map(function () { return $(this).text(); }).get();
+                            //VID_2_20211122_104848.mp4
+                            var timeVideoClickRow = new Date(tableData[1].substring(6, 10),
+                                tableData[1].substring(10, 12),
+                                tableData[1].substring(12, 14),
+                                tableData[1].substring(15, 17),
+                                tableData[1].substring(17, 19),
+                                tableData[1].substring(19, 21));
+                            timeVideoClickRow.setMonth(timeVideoClickRow.getMonth() - 1);
+                            timeVideoClickRow.setMinutes(timeVideoClickRow.getMinutes() - timeVideoClickRow.getTimezoneOffset());
+                            document.getElementById('idTimeVideoUsbStart').value = timeVideoClickRow.toISOString().substring(0, 16);
+
+                        });
+                    });
+                };
+
+                const nowTagVideo = new Date();
+                var intervalRequesCopy;
+                nowTagVideo.setMinutes(nowTagVideo.getMinutes() - nowTagVideo.getTimezoneOffset());
+                document.getElementById('idTimeVideoUsbStart').value = nowTagVideo.toISOString().substring(0, 16);
+                document.getElementById('btnDownloadToUsb').onclick = function () {
+                    var camChn = "0";
+                    if (document.getElementById('checkboxCamVideo1').checked) {
+                        camChn = "0";
+                    }
+                    else if (document.getElementById('checkboxCamVideo2').checked) {
+                        camChn = "1";
+                    }
+                    else if (document.getElementById('checkboxCamVideo3').checked) {
+                        camChn = "2";
+                    }
+                    else if (document.getElementById('checkboxCamVideo4').checked) {
+                        camChn = "3";
+                    }
+                    else {
+                        alert("Vui lòng chọn camera để lấy dữ liệu!!");
+                        return;
+                    }
+                    let numVideo = $('#idNumVideoUsb').val();
+                    let tS = new Date(idTimeVideoUsbStart.value).getTime() / 1000;
+
+                    let query = "api/copyToUsb?camera=" + camChn + "&timeStart=" + tS + "&count=" + numVideo;
+                    $.getJSON(query, function (data, status) {
+                        alert(data.description);
+                        if (data.status == 1) {
+                            intervalRequesCopy = setInterval(() => {
+                                $.getJSON("api/getCopyProcess", function (data1, status1) {
+                                    if (data1.status == 1) {
+                                        clearInterval(intervalRequesCopy);
+                                        $('#lbAnnounceCopy').html("Copy Dữ liệu đã xong.");
+                                        setTimeout(() => {
+                                            alert("Copy Successfully!");
+                                        }, 500);
+                                    }
+                                    else {
+                                        $('#lbAnnounceCopy').html(data1.description);
+                                    }
+                                });
+                            }, 1000);
+                        }
+                    });
+                };
+            </script>
+        </div>
+        <div id="tagWorkTime" class="container toggle" style="display: none;">
+            <h3>Dữ liệu thời gian làm việc</h3>
+            <br>
+            <div>
+                <form>
+                    <label for="">Ngày: </label>
+                    <input type="date" name="dateDuLieuTgLamViec" id="idDateDuLieuTgLamViec">
+                    <input type="button" value="Load Dữ liệu" id="btnDateDuLieuTgLamViec">
+                </form>
+            </div>
+            <div style="margin-top: 10px;">
+                <div style="height: 500px; overflow: auto;">
+                    <table class="table table-bordered " id="idThoiGianLamViecTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tên lái xe</th>
+                                <th>Giấy phép lái xe</th>
+                                <th>Thời gian bắt đầu</th>
+                                <th>Tọa độ bắt đầu</th>
+                                <th>Thời gian kết thúc</th>
+                                <th>Tọa độ kết thúc</th>
+                            </tr>
+                        </thead>
+                        <tbody id="idBodyThoiGianLamViecTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <script>
+                document.getElementById('idDateDuLieuTgLamViec').value = new Date().toJSON().slice(0, 10);
+                document.getElementById('btnDateDuLieuTgLamViec').onclick = function () {
+                    var date = new Date(idDateDuLieuTgLamViec.value);
+                    let query = "api/dataWorkTime?date=" + date.getTime();
+                    $.getJSON(query, function (data, status) {
+                        console.log(data);
+                        $('#idThoiGianLamViecTable tbody').html("");
+                        var tr;
+                        for (var i = 0; i < data.length; i++) {
+                            tr = $('<tr/>');
+                            let countId = i + 1;
+                            tr.append("<td>" + countId + "</td>");
+                            tr.append("<td>" + data[i].TenTaiXe + "</td>");
+                            tr.append("<td>" + data[i].BangLai + "</td>");
+                            tr.append("<td>" + data[i].TimeBatDau + "</td>");
+                            tr.append("<td>" + data[i].KinhDoBatDau + " - " + data[i].ViDoBatDau + "</td>");
+                            tr.append("<td>" + data[i].TimeKetThuc + "</td>");
+                            tr.append("<td>" + data[i].KinhDoKetThuc + " - " + data[i].ViDoKetThuc + "</td>");
+                            $('#idThoiGianLamViecTable tbody').append(tr);
+                        }
+                    });
+                };
+            </script>
+        </div>
+        <div id="tagDungDo" class="container toggle" style="display: none;">
+            <h3>Dữ liệu Dừng đỗ</h3>
+            <br>
+            <div>
+                <form>
+                    <label for="">Ngày: </label>
+                    <input type="date" name="dateDuLieuDungDo" id="idDateDuLieuDungDo">
+                    <input type="button" value="Load Dữ liệu" id="btnDateDuLieuDungDo">
+                </form>
+            </div>
+            <div style="margin-top: 10px;">
+                <div style="height: 500px; overflow: auto;">
+                    <table class="table table-bordered" id="idThoiGianDungDoTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Thời điểm dừng đỗ</th>
+                                <th>Kinh độ</th>
+                                <th>Vĩ độ</th>
+                                <th>Thời gian dừng</th>
+                            </tr>
+                        </thead>
+                        <tbody id="idBodyThoiGianDungDoTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <script>
+                document.getElementById('idDateDuLieuDungDo').value = new Date().toJSON().slice(0, 10);
+                document.getElementById('btnDateDuLieuDungDo').onclick = function () {
+                    var date = new Date(idDateDuLieuDungDo.value);
+                    let query = "api/dataDungDo?date=" + date.getTime();
+                    $.getJSON(query, function (data, status) {
+                        console.log(data);
+                        $('#idThoiGianDungDoTable tbody').html("");
+                        var tr;
+                        for (var i = 0; i < data.length; i++) {
+                            tr = $('<tr/>');
+                            let countId = i + 1;
+                            tr.append("<td>" + countId + "</td>");
+                            tr.append("<td>" + data[i].ThoiGian + "</td>");
+                            tr.append("<td>" + data[i].KinhDo + "</td>");
+                            tr.append("<td>" + data[i].ViDo + "</td>");
+                            tr.append("<td>" + data[i].SoPhut + "</td>");
+                            $('#idThoiGianDungDoTable tbody').append(tr);
+                        }
+                    });
+                };
+            </script>
+        </div>
+        <div id="tagHanhTrinh" class="container toggle" style="display: none;">
+            <h3>Dữ liệu hành trình</h3>
+            <br>
+            <div>
+                <form>
+                    <label for="">Ngày: </label>
+                    <input type="date" name="dateDuLieuHanhTrinh" id="idDateDuLieuHanhTrinh">
+                    <input type="button" value="Load Dữ liệu" id="btnDateDuLieuHanhTrinh">
+                </form>
+            </div>
+            <div style="margin-top: 10px;">
+                <div style="height: 500px; overflow: auto;">
+                    <table class="table table-bordered  tableFixHead" id="idHanhTrinhTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Thời điểm</th>
+                                <th>Kinh độ</th>
+                                <th>Vĩ độ</th>
+                                <th>Tốc độ GPS</th>
+                                <th>Tốc độ xung chuẩn</th>
+                            </tr>
+                        </thead>
+                        <tbody id="idBodyHanhTrinhTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <script>
+                document.getElementById('idDateDuLieuHanhTrinh').value = new Date().toJSON().slice(0, 10);
+                document.getElementById('btnDateDuLieuHanhTrinh').onclick = function () {
+                    var date = new Date(idDateDuLieuHanhTrinh.value);
+                    let query = "api/dataHanhTrinh?date=" + date.getTime();
+                    $.getJSON(query, function (data, status) {
+                        console.log(data);
+                        $('#idHanhTrinhTable tbody').html("");
+                        var tr;
+                        for (var i = 0; i < data.length; i++) {
+                            tr = $('<tr/>');
+                            let countId = i + 1;
+                            tr.append("<td>" + countId + "</td>");
+                            tr.append("<td>" + data[i].ThoiGian + "</td>");
+                            tr.append("<td>" + data[i].KinhDo + "</td>");
+                            tr.append("<td>" + data[i].ViDo + "</td>");
+                            tr.append("<td>" + data[i].VanTocGps + "</td>");
+                            tr.append("<td>" + data[i].VanTocXung + "</td>");
+                            $('#idHanhTrinhTable tbody').append(tr);
+                        }
+                    });
+                };
+            </script>
+        </div>
+        <div id="tagSpeed" class="container toggle" style="display: none;">
+            <h3>Dữ liệu Tốc độ từng giây</h3>
+            <br>
+            <div>
+                <form>
+                    <label for="">Ngày: </label>
+                    <input type="date" name="dateDuLieuTocDoTungGiay" id="idDateDuLieuTocDoTungGiay">
+                    <input type="button" value="Load Dữ liệu" id="btnDateDuLieuTocDoTungGiay">
+                </form>
+            </div>
+            <div style="margin-top: 10px;">
+                <div style="height: 500px; overflow: auto;">
+                    <table class="table table-bordered  tableFixHead" id="idTocDoTungGiayTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Thời điểm</th>
+                                <th>Tốc độ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="idBodyTocDoTungGiayTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <script>
+                document.getElementById('idDateDuLieuTocDoTungGiay').value = new Date().toJSON().slice(0, 10);
+                document.getElementById('btnDateDuLieuTocDoTungGiay').onclick = function () {
+                    var date = new Date(idDateDuLieuTocDoTungGiay.value);
+                    let query = "api/dataSpeed?date=" + date.getTime();
+                    $.getJSON(query, function (data, status) {
+                        console.log(data);
+                        $('#idTocDoTungGiayTable tbody').html("");
+                        var tr;
+                        for (var i = 0; i < data.length; i++) {
+                            tr = $('<tr/>');
+                            let countId = i + 1;
+                            tr.append("<td>" + countId + "</td>");
+                            tr.append("<td>" + data[i].ThoiGian + "</td>");
+                            tr.append("<td>" + data[i].TocDoTungGiay + "</td>");
+                            $('#idTocDoTungGiayTable tbody').append(tr);
+                        }
+                    });
+                };
+            </script>
+        </div>
+        <div id="tagOverSpeed" class="container toggle" style="display: none;">
+            <h3>Dữ liệu quá tốc độ</h3>
+            <br>
+            <div>
+                <form>
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <label>Ngày: </label>
+                            <input type="date" name="dateQuaTocDo" id="idDateQuaTocDo">
+                        </div>
+                        <div class="col-sm-5">
+                            <label>Ngưỡng vận tốc: </label>
+                            <input type="number" name="maxSpeed" id="idSetMaxSpeed"
+                                style="width: 70px; padding-left: 10px;">
+                        </div>
+                        <div class="col-sm-3">
+                            <input type="button" value="Load Dữ liệu" id="btnGetQuaTocDo">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div style="margin-top: 10px;">
+                <div style="height: 500px; overflow: auto;">
+                    <table class="table table-bordered " id="idDataQuaTocDoTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Thời gian bắt đầu</th>
+                                <th>Thời gian kết thúc</th>
+                                <th>Tốc độ tối đa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="idBodyDataQuaTocDoTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <script>
+                document.getElementById('idDateQuaTocDo').value = new Date().toJSON().slice(0, 10);
+                document.getElementById('idSetMaxSpeed').value = 50;
+                document.getElementById('btnGetQuaTocDo').onclick = function () {
+                    var date = new Date(idDateQuaTocDo.value);
+                    var maxSpd = idSetMaxSpeed.value;
+                    let query = "api/overSpeed?date=" + date.getTime() + "&limit=" + maxSpd;
+                    $.getJSON(query, function (data, status) {
+                        console.log(data);
+                        $('#idDataQuaTocDoTable tbody').html("");
+                        var tr;
+                        for (var i = 0; i < data.length; i++) {
+                            tr = $('<tr/>');
+                            let countId = i + 1;
+                            tr.append("<td>" + countId + "</td>");
+                            tr.append("<td>" + data[i].TimeStart + "</td>");
+                            tr.append("<td>" + data[i].TimeStop + "</td>");
+                            tr.append("<td>" + data[i].VtMax + "</td>");
+                            $('#idDataQuaTocDoTable tbody').append(tr);
+                        }
+                    });
+                };
+            </script>
+        </div>
+        <hr>
+        <footer>
+            <div class="container">
+                <p>© <strong id="footeryear"></strong></p>
+            </div>
+            <script type="text/javascript">
+                var d = new Date().getFullYear();
+                $('#footeryear').html(d);
+            </script>
+        </footer>
+    </div>
+</body>
+
+</html>
