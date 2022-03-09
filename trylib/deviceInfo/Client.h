@@ -22,6 +22,7 @@ private:
     int64_t timestamp_;
     time_t time_update_;
     double svn_;
+    std::string str_updateTime_;
     void get_params();
 
 public:
@@ -99,6 +100,15 @@ void Client::get_params()
         {
             this->svn_ = client_->at("svn").get<double_t>();
         }
+        if (client_->contains("updateTime") && client_->at("updateTime").is_string())
+        {
+            this->str_updateTime_ = client_->at("updateTime").get<std::string>();
+        }
+        this->cam_ = 0;
+        if (client_->contains("cam") && client_->at("cam").is_number())
+        {
+            this->cam_ = client_->at("cam").get<int32_t>();
+        }
     }
 }
 
@@ -123,6 +133,7 @@ int Client::get_cam_error()
         {
             return this->altitude_;
         }
+        return 0;
     }
 
     if (this->id_ > 800000000 && this->id_ < 900000000)
@@ -150,7 +161,11 @@ bool Client::isDeviceNotConnectTooLong()
 
 std::ostream &operator<<(std::ostream &o, const Client &c)
 {
-    o << "Serial: " << c.id_ << " \tdisk: " << c.disk_ << "\tlife: " << c.life_;
+
+    o << "Serial: " << std::setw(10) << c.id_ << " \tdisk: " << std::setw(5) << c.disk_
+      << "\tlife: " << std::setw(5) << c.life_ << "\taltidute: " << std::setw(5) << c.altitude_
+      << "\tcam: " << c.cam_ << "\thdop: " << std::setw(5) << c.hdop_ << "\tsvn: " << std::setw(5) << c.svn_ << "\r\n"
+      << "Time update: " << c.str_updateTime_;
     return o;
 }
 

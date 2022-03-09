@@ -108,7 +108,7 @@ char *getAllDeviceDataKeyOn()
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback_cURL);
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist);
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10); // 10s
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30); // 10s
         // curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, (long)CURL_HTTP_VERSION_3);
         /* Perform the request, res will get the return code */
         res = curl_easy_perform(curl);
@@ -276,7 +276,7 @@ void getListDevice()
     time_t timeGetRecord;
     struct tm *timeinfo;
     std::ifstream i("data.json");
-    json jsRes =json::parse(i);
+    json jsRes = json::parse(i);
 
     if (!jsRes.contains("status"))
     {
@@ -685,6 +685,8 @@ int main()
         std::cout << "\t3. Liet ke so serial disk >95%\r\n";
         std::cout << "\t4. Lay Device Info cuar thiet bi.\r\n";
         std::cout << "\t5. Lay Device disconnect too long.\r\n";
+        std::cout << "\t........................................\r\n";
+        std::cout << "\t1000. Lay du lieu sau 30p.\r\n";
         std::cout << "***************************************************\r\n";
         std::cout << "Enter the key: ";
         std::cin >> c;
@@ -695,15 +697,21 @@ int main()
         }
         else
         {
+            int timeGetData = 7200;
+            if (c == 1000)
+            {
+                timeGetData = 30 * 60;
+            }
+
             time_t timeNow;
             time(&timeNow);
             time_t timeLastRequest = getTimeLastRequest();
-            if (timeNow - timeLastRequest > 7200)
+            if (timeNow - timeLastRequest > timeGetData)
             {
                 getListDeviceUseApiRequestAndSaveFile();
             }
 
-            if (c == 0)
+            if (c == 1000 || c == 0)
             {
                 getListDevice();
             }
@@ -732,12 +740,15 @@ int main()
                 long serial;
                 std::cout << "Nhap so serial: ";
                 serial = getLong();
-                char *info = getDeviceInfo(serial);
-                Client *device = new Client(info);
-                std::cout << info << "\r\n";
-                std::cout << *device << "\r\n";
-                delete info;
-                delete device;
+                if (serial > 100000000 && serial < 999999999)
+                {
+                    char *info = getDeviceInfo(serial);
+                    Client *device = new Client(info);
+                    std::cout << info << "\r\n";
+                    std::cout << *device << "\r\n";
+                    delete info;
+                    delete device;
+                }
             }
             else if (c == 5)
             {
@@ -753,3 +764,5 @@ int main()
 
     return 0;
 }
+
+/// g++ -Wall --std=c++11 main.cpp nlohmann/json.hpp deviceInfo/Client.h -lcurl
