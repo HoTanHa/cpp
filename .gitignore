@@ -3,8 +3,8 @@
 */*.out
 */*.o
 *.gch
-trylib/data.json
-
+*.json
+*.txt
 
 
 
