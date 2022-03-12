@@ -9,6 +9,7 @@
 #include <curl/curl.h>
 #include <iostream>
 #include <chrono>
+#include <regex>
 #include <bits/stdc++.h>
 
 using json = nlohmann::json;
@@ -685,6 +686,7 @@ int main()
         std::cout << "\t3. Liet ke so serial disk >95%\r\n";
         std::cout << "\t4. Lay Device Info cuar thiet bi.\r\n";
         std::cout << "\t5. Lay Device disconnect too long.\r\n";
+        std::cout << "\t6. Lay Device Info trong line\r\n";
         std::cout << "\t........................................\r\n";
         std::cout << "\t1000. Lay du lieu sau 30p.\r\n";
         std::cout << "***************************************************\r\n";
@@ -754,10 +756,53 @@ int main()
             {
                 getDeviceNotConnectted();
             }
+            else if (c ==6)
+            {
+                std::vector<long> serialCheck;
+                std::fstream f;
+                std::string serial;
+                std::string *dataFile = new std::string("");
+                f.open("abc.txt");
+                if (f)
+                {
+                    while (!f.eof())
+                    {
+                        std::getline(f, serial);
+                        dataFile->append(serial);
+                        dataFile->append("  ");
+                    }
+                }
+                f.close();
+
+                std::regex word_regex("([689][0-9]{8})");
+                auto words_begin =
+                    std::sregex_iterator(dataFile->begin(), dataFile->end(), word_regex);
+                auto words_end = std::sregex_iterator();
+                for (std::sregex_iterator i = words_begin; i != words_end; ++i)
+                {
+                    std::smatch match = *i;
+                    serialCheck.push_back(std::atol(match.str().c_str()));
+                }
+
+                for (std::vector<long>::iterator it = serialCheck.begin(); it != serialCheck.end(); ++it)
+                {
+                    long serial = *it;
+                    char *info = getDeviceInfo(serial);
+                    Client *device = new Client(info);
+                    std::cout << *device << "\r\n\r\n";
+                    delete info;
+                    delete device;
+                    sleep(1);
+                }
+                std::cout << "\r\n";
+
+                delete dataFile;
+                serialCheck.clear();
+            }
+            
             ignoreLine();
         }
         sleep(1);
-        char d;
         std::cout << "Enter the key to continue...........";
         ignoreLine();
     }

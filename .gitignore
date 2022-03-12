@@ -5,8 +5,8 @@
 */valgrind-out.txt
 
 *.gch
-trylib/data.json
-
+*.json
+*.txt
 
 
 
