@@ -35,6 +35,7 @@ public:
     int get_cam_error();
     double_t get_version();
     long getTimestamp();
+    bool isCarKeyOn();
 
     bool isDeviceNotConnectTooLong();
     friend std::ostream &operator<<(std::ostream &o, const Client &c);
@@ -125,7 +126,25 @@ bool Client::is_sdCard_error()
     return false;
 }
 
-int Client::get_cam_error()
+bool Client::isCarKeyOn(){
+    if (this->id_ > 600000000 && this->id_ < 700000000)
+    {
+        if (hdop_ > 0)
+        {
+            return  true;
+        }
+        return false;
+    }
+
+    if (this->id_ > 800000000 && this->id_ < 900000000)
+    {
+        return this->key_ >0 ? true:false;
+    }
+    return false;
+}
+
+    int
+    Client::get_cam_error()
 {
     if (this->id_ > 600000000 && this->id_ < 700000000)
     {

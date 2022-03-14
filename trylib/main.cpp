@@ -84,7 +84,8 @@ char *getAllSocketClient()
 
 char *getAllDeviceDataKeyOn()
 {
-    char *url = (char *)"http://live1.adsun.vn:8100/api/manage/getAllDeviceDataKeyOn";
+    // char *url = (char *)"http://live1.adsun.vn:8100/api/manage/getAllDeviceDataKeyOn";
+    char *url = (char *)"http://live1.adsun.vn:8100/api/manage/getAllDeviceInfo";
     CURL *curl;
     CURLcode res;
     struct curl_slist *headerlist = NULL;
@@ -387,7 +388,7 @@ void getListDeviceCamError(bool isSerial6, double vsMin, double vsMax)
         }
         else if (isSerial6 && serialNumber > 600000000 && serialNumber < 700000000)
         {
-            if (it->get_version() > vsMin && it->get_version() < vsMax)
+            if (it->get_version() > vsMin && it->get_version() < vsMax && it->isCarKeyOn())
             {
                 altitude = it->get_cam_error();
                 serialNumberKeyOns.at(altitude).push_back(serialNumber);
@@ -756,7 +757,7 @@ int main()
             {
                 getDeviceNotConnectted();
             }
-            else if (c ==6)
+            else if (c == 6)
             {
                 std::vector<long> serialCheck;
                 std::fstream f;
@@ -799,7 +800,7 @@ int main()
                 delete dataFile;
                 serialCheck.clear();
             }
-            
+
             ignoreLine();
         }
         sleep(1);
