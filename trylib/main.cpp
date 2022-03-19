@@ -340,7 +340,7 @@ void getListDevice()
     std::cout << "\r\n";
     std::cout << "\r\n";
 }
-void getListDeviceCamError(bool isSerial6, double vsMin, double vsMax)
+void getListDeviceCamError(bool isSerial6, int vsMin, int vsMax)
 {
     time_t timeGetRecord;
     struct tm *timeinfo;
@@ -477,6 +477,60 @@ void getDeviceSdcard95percent()
     std::cout << "\r\n";
 }
 
+void getDeviceSerial6use2g()
+{
+    time_t timeGetRecord;
+    struct tm *timeinfo;
+
+    std::ifstream i("data.json");
+    json jsRes = json::parse(i);
+    if (!jsRes.contains("status"))
+    {
+        return;
+    }
+
+    int64_t status = jsRes.at("status").get<int64_t>();
+    if (status == 0)
+    {
+        return;
+    }
+    timeGetRecord = jsRes.at("timeGetRecord").get<uint64_t>();
+    timeinfo = localtime(&timeGetRecord);
+    std::cout << "The current date/time is get data: " << asctime(timeinfo) << "\r\n";
+    json dataDeviceInfos = jsRes.at("data");
+
+    std::vector<long> serial6is2G;
+    std::vector<Client> deviceClient;
+    if (dataDeviceInfos.is_array())
+    {
+        for (json::iterator it = dataDeviceInfos.begin(); it != dataDeviceInfos.end(); ++it)
+        {
+            json client = it.value();
+            Client device(&client, timeGetRecord);
+            deviceClient.push_back(device);
+        }
+    }
+    for (auto it = deviceClient.begin(); it != deviceClient.end(); ++it)
+    {
+        if (it->get_serial_number() > 600000000 && it->get_serial_number() < 700000000)
+        {
+            if (it->is_gsm_2G())
+            {
+                serial6is2G.push_back(it->get_serial_number());
+            }
+        }
+    }
+
+    std::cout << "Number of serial 6 is using 2G : " << serial6is2G.size() << "\r\n";
+    std::sort(serial6is2G.begin(), serial6is2G.end());
+    for (auto it = serial6is2G.begin(); it != serial6is2G.end(); ++it)
+    {
+        std::cout << *it << ", ";
+    }
+    std::cout << "\r\n";
+    std::cout << "\r\n";
+}
+
 void getDeviceNotConnectted()
 {
     time_t timeGetRecord;
@@ -527,6 +581,108 @@ void getDeviceNotConnectted()
     {
         std::cout << *it << ", ";
     }
+    std::cout << "\r\n";
+    std::cout << "\r\n";
+}
+
+void getNumberDeviceAsVersion(int version)
+{
+    time_t timeGetRecord;
+    struct tm *timeinfo;
+
+    std::ifstream i("data.json");
+    json jsRes = json::parse(i);
+    if (!jsRes.contains("status"))
+    {
+        return;
+    }
+
+    int64_t status = jsRes.at("status").get<int64_t>();
+    if (status == 0)
+    {
+        return;
+    }
+    timeGetRecord = jsRes.at("timeGetRecord").get<uint64_t>();
+    timeinfo = localtime(&timeGetRecord);
+    std::cout << "The current date/time is get data: " << asctime(timeinfo) << "\r\n";
+    json dataDeviceInfos = jsRes.at("data");
+
+    std::vector<Client> deviceClient;
+    int NumDevice = 0;
+    if (dataDeviceInfos.is_array())
+    {
+        for (json::iterator it = dataDeviceInfos.begin(); it != dataDeviceInfos.end(); ++it)
+        {
+            json client = it.value();
+            Client device(&client, timeGetRecord);
+            deviceClient.push_back(device);
+        }
+    }
+    for (auto it = deviceClient.begin(); it != deviceClient.end(); ++it)
+    {
+        if (it->get_version() == version)
+        {
+            NumDevice++;
+        }
+    }
+
+    std::cout << "Number of devices in version " << version << " :" << NumDevice << "\r\n";
+    std::cout << "\r\n";
+    std::cout << "\r\n";
+}
+
+void getTotalNumberDeviceAsVersion()
+{
+    time_t timeGetRecord;
+    struct tm *timeinfo;
+
+    std::ifstream i("data.json");
+    json jsRes = json::parse(i);
+    if (!jsRes.contains("status"))
+    {
+        return;
+    }
+
+    int64_t status = jsRes.at("status").get<int64_t>();
+    if (status == 0)
+    {
+        return;
+    }
+    timeGetRecord = jsRes.at("timeGetRecord").get<uint64_t>();
+    timeinfo = localtime(&timeGetRecord);
+    std::cout << "The current date/time is get data: " << asctime(timeinfo) << "\r\n";
+    json dataDeviceInfos = jsRes.at("data");
+
+    std::vector<int> versionClient;
+    int NumDevice = 0;
+    if (dataDeviceInfos.is_array())
+    {
+        for (json::iterator it = dataDeviceInfos.begin(); it != dataDeviceInfos.end(); ++it)
+        {
+            json client = it.value();
+            Client device(&client, timeGetRecord);
+            if (device.get_serial_number() > 600000000 && device.get_serial_number() < 700000000)
+            {
+                versionClient.push_back(device.get_version());
+            }
+        }
+    }
+
+    std::sort(versionClient.begin(), versionClient.end());
+    std::map<int, int> duplicate;
+    auto beg = std::begin(versionClient) + 1;
+    for (; beg != std::end(versionClient); ++beg)
+    {
+        if (*beg == *(beg - 1))
+        {
+            duplicate[*beg]++;
+        }
+    }
+    for (const auto &i : duplicate)
+    {
+        std::cout << "Version: " << std::setw(5) << i.first << " has: " << std::setw(5) << i.second + 1 << " deivce" << '\n';
+    }
+
     std::cout << "\r\n";
     std::cout << "\r\n";
 }
@@ -688,6 +844,8 @@ int main()
         std::cout << "\t4. Lay Device Info cuar thiet bi.\r\n";
         std::cout << "\t5. Lay Device disconnect too long.\r\n";
         std::cout << "\t6. Lay Device Info trong line\r\n";
+        std::cout << "\t7. Lay Device serial 6 use 2G\r\n";
+        std::cout << "\t8. Lay Numbre of Device in version: \r\n";
         std::cout << "\t........................................\r\n";
         std::cout << "\t1000. Lay du lieu sau 30p.\r\n";
         std::cout << "***************************************************\r\n";
@@ -700,39 +858,37 @@ int main()
         }
         else
         {
-            int timeGetData = 7200;
-            if (c == 1000)
-            {
-                timeGetData = 30 * 60;
-            }
-
-            time_t timeNow;
-            time(&timeNow);
-            time_t timeLastRequest = getTimeLastRequest();
-            if (timeNow - timeLastRequest > timeGetData)
-            {
-                getListDeviceUseApiRequestAndSaveFile();
-            }
-
             if (c == 1000 || c == 0)
             {
+                int timeGetData = 7200;
+                if (c == 1000)
+                {
+                    timeGetData = 30 * 60;
+                }
+                time_t timeNow;
+                time(&timeNow);
+                time_t timeLastRequest = getTimeLastRequest();
+                if (timeNow - timeLastRequest > timeGetData)
+                {
+                    getListDeviceUseApiRequestAndSaveFile();
+                }
                 getListDevice();
             }
             else if (c == 1)
             {
-                double vsMin;
+                int vsMin;
                 std::cout << "Enter the version min (double): ";
-                vsMin = getDouble();
+                vsMin = (int)(getDouble() * 1000);
 
-                double vsMax;
+                int vsMax;
                 std::cout << "Enter the version max (double): ";
-                vsMax = getDouble();
+                vsMax = (int)(getDouble() * 1000);
 
-                getListDeviceCamError(true, vsMin - 0.0001f, vsMax + 0.0001f);
+                getListDeviceCamError(true, vsMin - 1, vsMax + 1);
             }
             else if (c == 2)
             {
-                getListDeviceCamError(false, 1.0f, 10.0f);
+                getListDeviceCamError(false, 1000, 10000);
             }
             else if (c == 3)
             {
@@ -793,12 +949,27 @@ int main()
                     std::cout << *device << "\r\n\r\n";
                     delete info;
                     delete device;
-                    sleep(1);
+                    sleep(2);
                 }
                 std::cout << "\r\n";
 
                 delete dataFile;
                 serialCheck.clear();
+            }
+            else if (c == 7)
+            {
+                getDeviceSerial6use2g();
+            }
+            else if (c == 8)
+            {
+                int vsMax;
+                std::cout << "Enter the version max (double): ";
+                vsMax = (int)(getDouble() * 1000);
+                getNumberDeviceAsVersion(vsMax);
+            }
+            else if (c == 9)
+            {
+                getTotalNumberDeviceAsVersion();
             }
 
             ignoreLine();

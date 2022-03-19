@@ -24,6 +24,7 @@ private:
     double svn_;
     std::string str_updateTime_;
     void get_params();
+    std::string str_ip_;
 
 public:
     Client(json *js_client, time_t timeUpdate);
@@ -33,9 +34,10 @@ public:
     int64_t get_serial_number();
     bool is_sdCard_error();
     int get_cam_error();
-    double_t get_version();
+    int get_version();
     long getTimestamp();
     bool isCarKeyOn();
+    bool is_gsm_2G();
 
     bool isDeviceNotConnectTooLong();
     friend std::ostream &operator<<(std::ostream &o, const Client &c);
@@ -110,6 +112,16 @@ void Client::get_params()
         {
             this->cam_ = client_->at("cam").get<int32_t>();
         }
+
+        if (client_->contains("ip") && client_->at("ip").is_string())
+        {
+            this->str_ip_ = client_->at("ip").get<std::string>();
+        }
+
+        if (altitude_ == 4 && cam_ == 1)
+        {
+            this->altitude_ = 5;
+        }
     }
 }
 
@@ -126,25 +138,25 @@ bool Client::is_sdCard_error()
     return false;
 }
 
-bool Client::isCarKeyOn(){
+bool Client::isCarKeyOn()
+{
     if (this->id_ > 600000000 && this->id_ < 700000000)
     {
         if (hdop_ > 0)
         {
-            return  true;
+            return true;
         }
         return false;
     }
 
     if (this->id_ > 800000000 && this->id_ < 900000000)
     {
-        return this->key_ >0 ? true:false;
+        return this->key_ > 0 ? true : false;
     }
     return false;
 }
 
-    int
-    Client::get_cam_error()
+int Client::get_cam_error()
 {
     if (this->id_ > 600000000 && this->id_ < 700000000)
     {
@@ -163,9 +175,9 @@ bool Client::isCarKeyOn(){
     return 0;
 }
 
-double_t Client::get_version()
+int Client::get_version()
 {
-    return this->svn_;
+    return (int)(this->svn_ * 1000);
 }
 
 long Client::getTimestamp()
@@ -178,6 +190,24 @@ bool Client::isDeviceNotConnectTooLong()
     return (timestamp_ < (time_update_ - 5 * 3600));
 }
 
+bool Client::is_gsm_2G()
+{
+    try
+    {
+        std::size_t found = this->str_ip_.find("2G");
+        if (found != std::string::npos)
+        {
+            return true;
+        }
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+
+    return false;
+}
+
 std::ostream &operator<<(std::ostream &o, const Client &c)
 {
 
@@ -187,5 +217,58 @@ std::ostream &operator<<(std::ostream &o, const Client &c)
       << "Time update: " << c.str_updateTime_;
     return o;
 }
+
+// struct versionNode
+// {
+//     int version;
+//     int num;
+//     struct versionNode *next;
+// };
+
+// void add_a_device_to_list(struct versionNode *head, int version)
+// {
+//     if (head == NULL)
+//     {
+//         head = new versionNode();
+//         head->num = 1;
+//         head->version = version;
+//         head->next = NULL;
+//     }
+//     else
+//     {
+//         bool isExist = false;
+//         struct versionNode *current = head;
+//         while (current->next != NULL)
+//         {
+//             if (version == current->version)
+//             {
+//                 current->num++;
+//                 isExist = true;
+//                 break;
+//             }
+//             current = current->next;
+//         }
+//         if (isExist)
+//         {
+//             return;
+//         }
+//         current->next = new versionNode();
+//         current->next->version = version;
+//         current->next->num = 1;
+//         current->next->next = NULL;
+//     }
+// }
+
+// void free_List(struct versionNode *head)
+// {
+//     struct versionNode *current = head;
+//     struct versionNode *temp;
+//     while (current->next != NULL)
+//     {
+//         temp = current.next;
+//         delete current;
+//         current = temp;
+//     }
+// }
 
 #endif //__CLIENT_H__
