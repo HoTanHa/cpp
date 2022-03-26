@@ -315,20 +315,18 @@ void getListDevice()
     int numOfSerial9 = 0;
     for (auto it = deviceClient.begin(); it != deviceClient.end(); ++it)
     {
-        if (it->get_serial_number() > 900000000)
+
+        if (it->is_serial_8_quectel())
         {
-            numOfSerial9++;
+            numOfSerial8++;
+        }
+        else if (it->is_serial_6_simcom())
+        {
+            numOfSerial6++;
         }
         else
         {
-            if (it->get_serial_number() > 800000000)
-            {
-                numOfSerial8++;
-            }
-            else if (it->get_serial_number() > 600000000)
-            {
-                numOfSerial6++;
-            }
+            numOfSerial9++;
         }
     }
 
@@ -381,12 +379,15 @@ void getListDeviceCamError(bool isSerial6, int vsMin, int vsMax)
     for (auto it = deviceClient.begin(); it != deviceClient.end(); ++it)
     {
         serialNumber = it->get_serial_number();
-        if (!isSerial6 && serialNumber > 800000000 && serialNumber < 900000000)
+        if (!isSerial6)
         {
-            altitude = it->get_cam_error();
-            serialNumberKeyOns.at(altitude).push_back(serialNumber);
+            if (it->is_serial_8_quectel() && it->isCarKeyOn())
+            {
+                altitude = it->get_cam_error();
+                serialNumberKeyOns.at(altitude).push_back(serialNumber);
+            }
         }
-        else if (isSerial6 && serialNumber > 600000000 && serialNumber < 700000000)
+        else if (it->is_serial_6_simcom())
         {
             if (it->get_version() > vsMin && it->get_version() < vsMax && it->isCarKeyOn())
             {
@@ -458,7 +459,7 @@ void getDeviceSdcard95percent()
     }
     for (auto it = deviceClient.begin(); it != deviceClient.end(); ++it)
     {
-        if (it->get_serial_number() < 900000000)
+        if (it->is_serial_6_simcom() || it->is_serial_8_quectel())
         {
             if (it->is_sdCard_error())
             {
@@ -500,23 +501,15 @@ void getDeviceSerial6use2g()
     json dataDeviceInfos = jsRes.at("data");
 
     std::vector<long> serial6is2G;
-    std::vector<Client> deviceClient;
     if (dataDeviceInfos.is_array())
     {
         for (json::iterator it = dataDeviceInfos.begin(); it != dataDeviceInfos.end(); ++it)
         {
             json client = it.value();
             Client device(&client, timeGetRecord);
-            deviceClient.push_back(device);
-        }
-    }
-    for (auto it = deviceClient.begin(); it != deviceClient.end(); ++it)
-    {
-        if (it->get_serial_number() > 600000000 && it->get_serial_number() < 700000000)
-        {
-            if (it->is_gsm_2G())
+            if (device.is_gsm_2G())
             {
-                serial6is2G.push_back(it->get_serial_number());
+                serial6is2G.push_back(device.get_serial_number());
             }
         }
     }
@@ -554,23 +547,15 @@ void getDeviceNotConnectted()
     json dataDeviceInfos = jsRes.at("data");
 
     std::vector<long> serialDisconnect;
-    std::vector<Client> deviceClient;
     if (dataDeviceInfos.is_array())
     {
         for (json::iterator it = dataDeviceInfos.begin(); it != dataDeviceInfos.end(); ++it)
         {
             json client = it.value();
             Client device(&client, timeGetRecord);
-            deviceClient.push_back(device);
-        }
-    }
-    for (auto it = deviceClient.begin(); it != deviceClient.end(); ++it)
-    {
-        if (it->get_serial_number() < 900000000)
-        {
-            if (it->isDeviceNotConnectTooLong())
+            if (device.isDeviceNotConnectTooLong())
             {
-                serialDisconnect.push_back(it->get_serial_number());
+                serialDisconnect.push_back(device.get_serial_number());
             }
         }
     }
@@ -631,7 +616,7 @@ void getNumberDeviceAsVersion(int version)
     std::cout << "\r\n";
 }
 
-void getTotalNumberDeviceAsVersion()
+void getTotalNumberDeviceAsVersion(bool is6)
 {
     time_t timeGetRecord;
     struct tm *timeinfo;
@@ -654,16 +639,27 @@ void getTotalNumberDeviceAsVersion()
     json dataDeviceInfos = jsRes.at("data");
 
     std::vector<int> versionClient;
-    int NumDevice = 0;
+
     if (dataDeviceInfos.is_array())
     {
         for (json::iterator it = dataDeviceInfos.begin(); it != dataDeviceInfos.end(); ++it)
         {
             json client = it.value();
             Client device(&client, timeGetRecord);
-            if (device.get_serial_number() > 600000000 && device.get_serial_number() < 700000000)
+            if (is6)
             {
-                versionClient.push_back(device.get_version());
+                if (device.is_serial_6_simcom())
+                {
+                    versionClient.push_back(device.get_version());
+                }
+            }
+            else
+            {
+
+                if (device.is_serial_8_quectel())
+                {
+                    versionClient.push_back(device.get_version());
+                }
             }
         }
     }
@@ -683,6 +679,61 @@ void getTotalNumberDeviceAsVersion()
         std::cout << "Version: " << std::setw(5) << i.first << " has: " << std::setw(5) << i.second + 1 << " deivce" << '\n';
     }
 
+    std::cout << "\r\n";
+    std::cout << "\r\n";
+}
+
+void getTotalNumberDeviceSimCom()
+{
+    getTotalNumberDeviceAsVersion(true);
+}
+void getTotalNumberDeviceQuectel()
+{
+    getTotalNumberDeviceAsVersion(false);
+}
+
+void getDeviceHasSim2(int version)
+{
+    time_t timeGetRecord;
+    struct tm *timeinfo;
+
+    std::ifstream i("data.json");
+    json jsRes = json::parse(i);
+    if (!jsRes.contains("status"))
+    {
+        return;
+    }
+
+    int64_t status = jsRes.at("status").get<int64_t>();
+    if (status == 0)
+    {
+        return;
+    }
+    timeGetRecord = jsRes.at("timeGetRecord").get<uint64_t>();
+    timeinfo = localtime(&timeGetRecord);
+    std::cout << "The current date/time is get data: " << asctime(timeinfo) << "\r\n";
+    json dataDeviceInfos = jsRes.at("data");
+
+    std::vector<long> serialSim2;
+    if (dataDeviceInfos.is_array())
+    {
+        for (json::iterator it = dataDeviceInfos.begin(); it != dataDeviceInfos.end(); ++it)
+        {
+            json client = it.value();
+            Client device(&client, timeGetRecord);
+            if (device.get_version() == version && device.is_has_imei2())
+            {
+                serialSim2.push_back(device.get_serial_number());
+            }
+        }
+    }
+
+    std::cout << "Number of serial has sim2 in version..." << version << "....: " << serialSim2.size() << "\r\n";
+    std::sort(serialSim2.begin(), serialSim2.end());
+    for (auto it = serialSim2.begin(); it != serialSim2.end(); ++it)
+    {
+        std::cout << *it << ", ";
+    }
     std::cout << "\r\n";
     std::cout << "\r\n";
 }
@@ -837,17 +888,33 @@ int main()
         std::cout << "\r\n\r\n";
         std::cout << "***************************************************\r\n";
         std::cout << "***************************************************\r\n";
-        std::cout << "\t0. Thong so tong quan Xe dang mo may.\r\n";
-        std::cout << "\t1. Liet ke so serial 6 loi.\r\n";
-        std::cout << "\t2. Liet ke so serial 8 loi.\r\n";
-        std::cout << "\t3. Liet ke so serial disk >95%\r\n";
-        std::cout << "\t4. Lay Device Info cuar thiet bi.\r\n";
-        std::cout << "\t5. Lay Device disconnect too long.\r\n";
-        std::cout << "\t6. Lay Device Info trong line\r\n";
-        std::cout << "\t7. Lay Device serial 6 use 2G\r\n";
-        std::cout << "\t8. Lay Numbre of Device in version: \r\n";
+        std::cout << "\t" << std::setw(6) << "0. "
+                  << "Thong so tong quan Xe dang mo may.\r\n ";
+        std::cout << "\t" << std::setw(6) << "1. "
+                  << "Liet ke so serial 6 loi.\r\n";
+        std::cout << "\t" << std::setw(6) << "2. "
+                  << "Liet ke so serial 8 loi.\r\n";
+        std::cout << "\t" << std::setw(6) << "3. "
+                  << "Liet ke so serial disk >95%\r\n";
+        std::cout << "\t" << std::setw(6) << "4. "
+                  << "Lay Device Info cuar thiet bi.\r\n";
+        std::cout << "\t" << std::setw(6) << "5. "
+                  << "Lay Device disconnect too long.\r\n";
+        std::cout << "\t" << std::setw(6) << "6. "
+                  << "Lay Device Info trong line\r\n";
+        std::cout << "\t" << std::setw(6) << "7. "
+                  << "Lay Device serial 6 use 2G\r\n";
+        std::cout << "\t" << std::setw(6) << "8. "
+                  << "Lay Numbre of Device in version: \r\n";
+        std::cout << "\t" << std::setw(6) << "9. "
+                  << "Lay Total Device SIMCOM: \r\n";
+        std::cout << "\t" << std::setw(6) << "10. "
+                  << "Lay Totak Device QUECTEL: \r\n";
+        std::cout << "\t" << std::setw(6) << "11. "
+                  << "Lay Number Device HasTwoSim in version: \r\n";
         std::cout << "\t........................................\r\n";
-        std::cout << "\t1000. Lay du lieu sau 30p.\r\n";
+        std::cout << "\t" << std::setw(6) << "1000. "
+                  << "Lay du lieu sau 30p.\r\n";
         std::cout << "***************************************************\r\n";
         std::cout << "Enter the key: ";
         std::cin >> c;
@@ -969,7 +1036,17 @@ int main()
             }
             else if (c == 9)
             {
-                getTotalNumberDeviceAsVersion();
+                getTotalNumberDeviceSimCom();
+            }
+            else if (c == 10)
+            {
+                getTotalNumberDeviceQuectel();
+            }
+            else if (c == 11)
+            {
+                std::cout << "Enter the version max (double): ";
+                int version = (int)(getDouble() * 1000);
+                getDeviceHasSim2(version);
             }
 
             ignoreLine();

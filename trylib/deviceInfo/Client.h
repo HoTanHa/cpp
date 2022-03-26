@@ -25,6 +25,9 @@ private:
     std::string str_updateTime_;
     void get_params();
     std::string str_ip_;
+    std::string str_imei2_;
+    bool isSerial6_;
+    bool isSerial8_;
 
 public:
     Client(json *js_client, time_t timeUpdate);
@@ -38,6 +41,10 @@ public:
     long getTimestamp();
     bool isCarKeyOn();
     bool is_gsm_2G();
+    bool is_has_imei2();
+
+    bool is_serial_6_simcom();
+    bool is_serial_8_quectel();
 
     bool isDeviceNotConnectTooLong();
     friend std::ostream &operator<<(std::ostream &o, const Client &c);
@@ -48,6 +55,8 @@ Client::Client(json *js_client, time_t timeUpdate)
     this->client_ = js_client; // new json(nullptr);
     // this->client_->merge_patch(*js_client);
     this->time_update_ = timeUpdate;
+    isSerial6_ = false;
+    isSerial8_ = false;
     this->get_params();
 }
 
@@ -117,10 +126,26 @@ void Client::get_params()
         {
             this->str_ip_ = client_->at("ip").get<std::string>();
         }
+        if (client_->contains("imei2") && client_->at("imei2").is_string())
+        {
+            this->str_imei2_ = client_->at("imei2").get<std::string>();
+        }
 
         if (altitude_ == 4 && cam_ == 1)
         {
             this->altitude_ = 5;
+        }
+        if (this->id_ > 600000000 && this->id_ < 700000000)
+        {
+            isSerial6_ = true;
+        }
+        if (this->id_ > 800000000 && this->id_ < 900000000)
+        {
+            isSerial8_ = true;
+        }
+        if (client_->contains("key") && client_->at("key").is_number())
+        {
+            this->key_ = client_->at("key").get<int32_t>();
         }
     }
 }
@@ -140,7 +165,7 @@ bool Client::is_sdCard_error()
 
 bool Client::isCarKeyOn()
 {
-    if (this->id_ > 600000000 && this->id_ < 700000000)
+    if (this->isSerial6_)
     {
         if (hdop_ > 0)
         {
@@ -149,7 +174,7 @@ bool Client::isCarKeyOn()
         return false;
     }
 
-    if (this->id_ > 800000000 && this->id_ < 900000000)
+    if (this->isSerial8_)
     {
         return this->key_ > 0 ? true : false;
     }
@@ -158,7 +183,7 @@ bool Client::isCarKeyOn()
 
 int Client::get_cam_error()
 {
-    if (this->id_ > 600000000 && this->id_ < 700000000)
+    if (this->isSerial6_)
     {
         if ((timestamp_ > (time_update_ - 100) && hdop_ > 0))
         {
@@ -167,7 +192,7 @@ int Client::get_cam_error()
         return 0;
     }
 
-    if (this->id_ > 800000000 && this->id_ < 900000000)
+    if (this->isSerial8_)
     {
         return this->altitude_;
     }
@@ -205,6 +230,24 @@ bool Client::is_gsm_2G()
         std::cerr << e.what() << '\n';
     }
 
+    return false;
+}
+
+bool Client::is_serial_6_simcom()
+{
+    return isSerial6_;
+}
+bool Client::is_serial_8_quectel()
+{
+    return isSerial8_;
+}
+
+bool Client::is_has_imei2()
+{
+    if (this->str_imei2_.length() > 10)
+    {
+        return true;
+    }
     return false;
 }
 
