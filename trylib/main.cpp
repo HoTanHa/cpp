@@ -338,6 +338,7 @@ void getListDevice()
     std::cout << "\r\n";
     std::cout << "\r\n";
 }
+
 void getListDeviceCamError(bool isSerial6, int vsMin, int vsMax)
 {
     time_t timeGetRecord;
@@ -361,10 +362,8 @@ void getListDeviceCamError(bool isSerial6, int vsMin, int vsMax)
 
     json dataDeviceInfos = jsRes.at("data");
 
-    std::vector<std::vector<long>> serialNumberKeyOns;
-    std::vector<Client> deviceClient;
-    serialNumberKeyOns.resize(10);
-    int numberOfserial = 0;
+    std::vector<int> camError;
+    std::vector<long> deviceError;
     int altitude;
     long serialNumber;
     if (dataDeviceInfos.is_array())
@@ -373,55 +372,57 @@ void getListDeviceCamError(bool isSerial6, int vsMin, int vsMax)
         {
             json client = it.value();
             Client device(&client, timeGetRecord);
-            deviceClient.push_back(device);
+
+            serialNumber = device.get_serial_number();
+            if (!isSerial6)
+            {
+                if (device.is_serial_8_quectel() && device.isCarKeyOn())
+                {
+                    altitude = device.get_cam_error();
+                    camError.push_back(altitude);
+                    if (altitude != 0)
+                    {
+                        deviceError.push_back(serialNumber);
+                    }
+                }
+            }
+            else if (device.is_serial_6_simcom())
+            {
+                if (device.get_version() > vsMin && device.get_version() < vsMax && device.isCarKeyOn())
+                {
+                    altitude = device.get_cam_error();
+                    camError.push_back(altitude);
+                    if (altitude != 0)
+                    {
+                        deviceError.push_back(serialNumber);
+                    }
+                }
+            }
         }
     }
-    for (auto it = deviceClient.begin(); it != deviceClient.end(); ++it)
+
+    std::sort(camError.begin(), camError.end());
+    std::map<int, int> numberOfEachErrors;
+    auto errCam = std::begin(camError) + 1;
+    for (; errCam != std::end(camError); ++errCam)
     {
-        serialNumber = it->get_serial_number();
-        if (!isSerial6)
+        if (*errCam == *(errCam - 1))
         {
-            if (it->is_serial_8_quectel() && it->isCarKeyOn())
-            {
-                altitude = it->get_cam_error();
-                serialNumberKeyOns.at(altitude).push_back(serialNumber);
-            }
-        }
-        else if (it->is_serial_6_simcom())
-        {
-            if (it->get_version() > vsMin && it->get_version() < vsMax && it->isCarKeyOn())
-            {
-                altitude = it->get_cam_error();
-                serialNumberKeyOns.at(altitude).push_back(serialNumber);
-            }
+            numberOfEachErrors[*errCam]++;
         }
     }
-
-    for (size_t i = 0; i < serialNumberKeyOns.size(); i++)
+    for (const auto &i : numberOfEachErrors)
     {
-        numberOfserial += serialNumberKeyOns.at(i).size();
-        if (serialNumberKeyOns.at(i).size() == 0)
-        {
-            continue;
-        }
-
-        std::sort(serialNumberKeyOns.at(i).begin(), serialNumberKeyOns.at(i).end());
-        std::cout << "....Altitude: " << std::setw(3) << i
-                  << "\t\tNumber: " << std::setw(5) << serialNumberKeyOns.at(i).size()
-                  << "\r\n";
-
-        if (i != 0)
-        {
-            std::cout << "\t";
-            for (auto it = serialNumberKeyOns.at(i).begin(); it != serialNumberKeyOns.at(i).end(); ++it)
-            {
-                std::cout << *it << ", ";
-            }
-            std::cout << "\r\n";
-        }
-        std::cout << "\r\n";
+        std::cout << "Altitude: " << std::setw(5) << i.first << " has: " << std::setw(5) << i.second + 1 << " deivce" << '\n';
     }
-    std::cout << "..........SUM : " << numberOfserial << "..............\r\n\r\n";
+    std::cout << "\r\n";
+    for (auto it = deviceError.begin(); it != deviceError.end(); ++it)
+    {
+        std::cout << *it << ", ";
+    }
+    std::cout << "\r\n";
+    std::cout << "\r\n";
+    std::cout << "..........SUM : " << camError.size() << "..............\r\n\r\n";
 }
 
 void getDeviceSdcard95percent()
@@ -909,7 +910,7 @@ int main()
         std::cout << "\t" << std::setw(6) << "9. "
                   << "Lay Total Device SIMCOM: \r\n";
         std::cout << "\t" << std::setw(6) << "10. "
-                  << "Lay Totak Device QUECTEL: \r\n";
+                  << "Lay Total Device QUECTEL: \r\n";
         std::cout << "\t" << std::setw(6) << "11. "
                   << "Lay Number Device HasTwoSim in version: \r\n";
         std::cout << "\t........................................\r\n";
@@ -943,15 +944,7 @@ int main()
             }
             else if (c == 1)
             {
-                int vsMin;
-                std::cout << "Enter the version min (double): ";
-                vsMin = (int)(getDouble() * 1000);
-
-                int vsMax;
-                std::cout << "Enter the version max (double): ";
-                vsMax = (int)(getDouble() * 1000);
-
-                getListDeviceCamError(true, vsMin - 1, vsMax + 1);
+                getListDeviceCamError(true, 1000, 10000);
             }
             else if (c == 2)
             {

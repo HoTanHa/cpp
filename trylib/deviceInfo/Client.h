@@ -187,6 +187,11 @@ int Client::get_cam_error()
     {
         if ((timestamp_ > (time_update_ - 100) && hdop_ > 0))
         {
+            if (get_version() == 2221 && cam_ == 0 && key_ > 0)
+            {
+                return 10;
+            }
+
             return this->altitude_;
         }
         return 0;
