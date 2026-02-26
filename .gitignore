@@ -1,0 +1,12 @@
+*.out
+*.o
+*/*.out
+*/*.o
+*/valgrind-out.txt
+
+*.gch
+*.json
+*.txt
+test*
+
+
